@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Edit Application</title>
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; background: #f7fafc; }
+    
+    .navbar { position: fixed; left: 250px; top: 0; right: 0; background: white; color: #2d3748; padding: 20px 30px; font-size: 22px; font-weight: 600; z-index: 900; transition: left 0.3s ease; display: flex; align-items: center; gap: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border-bottom: 1px solid #e2e8f0; }
+    .sidebar.hide ~ .navbar { left: 0; }
+    .toggle-btn { background: rgba(102, 126, 234, 0.1); border: none; font-size: 24px; color: #667eea; cursor: pointer; padding: 8px 12px; border-radius: 10px; transition: all 0.3s; }
+    .toggle-btn:hover { background: rgba(102, 126, 234, 0.2); transform: translateY(-2px); }
+    
+    .content { margin-left: 250px; margin-top: 80px; padding: 40px 30px; transition: margin-left 0.3s ease; min-height: calc(100vh - 80px); }
+    .sidebar.hide ~ .content { margin-left: 0; }
+    
+    .form-card { background: white; padding: 40px; border-radius: 16px; max-width: 850px; margin: auto; box-shadow: 0 4px 20px rgba(0,0,0,0.08); border: 1px solid #e2e8f0; }
+    h2 { text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-size: 28px; margin-bottom: 30px; font-weight: 600; }
+    label { font-weight: 500; margin: 8px 0; display: block; color: #4a5568; font-size: 14px; }
+    input, select, textarea { width: 100%; padding: 12px 16px; border: 2px solid #e2e8f0; border-radius: 10px; margin-bottom: 20px; font-family: 'Inter', sans-serif; font-size: 14px; transition: all 0.3s; background: #f7fafc; }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: #667eea; background: white; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1); }
+    .form-row { display: flex; gap: 20px; }
+    .form-row div { flex: 1; }
+    .submit-btn { width: 100%; padding: 16px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 25px; transition: all 0.3s; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3); }
+    .submit-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4); }
+    .readonly { background-color: #edf2f7; cursor: not-allowed; }
+    small { color: #718096; font-size: 12px; display: block; margin-top: -15px; margin-bottom: 15px; }
+</style>
+</head>
+<body>
+{% include 'layout/sidebar.html' %}
+
+<div class="navbar">
+    <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
+    ✏️ Edit Application
+</div>
+
+<div class="content">
+    <div class="form-card">
+        <h2>Edit Your Application</h2>
+        
+        <form action="/edit_application/{{ app.get('renewal_id', app.get('application_id')) }}?type={{ app_type }}" method="POST" enctype="multipart/form-data">
+            
+            <!-- Read-only fields -->
+            <label>Full Name (Cannot be changed)</label>
+            <div class="form-row">
+                <div><input type="text" value="{{ app.first_name }}" readonly class="readonly"></div>
+                <div><input type="text" value="{{ app.middle_name }}" readonly class="readonly"></div>
+                <div><input type="text" value="{{ app.last_name }}" readonly class="readonly"></div>
+            </div>
+            
+            <label>Address (Cannot be changed)</label>
+            <input type="text" value="{{ app.address }}, {{ app.baranggay }}, {{ app.municipality }}" readonly class="readonly">
+            
+            <!-- Editable fields -->
+            <div class="form-row">
+                <div>
+                    <label>Student ID</label>
+                    <input type="text" name="student_id" value="{{ app.student_id }}" required>
+                </div>
+                <div>
+                    <label>Contact Number</label>
+                    <input type="text" name="contact_number" value="{{ app.contact_number }}" required>
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div>
+                    <label>Course</label>
+                    <input type="text" name="course" value="{{ app.course }}" required>
+                </div>
+                <div>
+                    <label>Year Level</label>
+                    <select name="year_level" required>
+                        <option value="{{ app.year_level }}" selected>{{ app.year_level }}</option>
+                        <option>Grade 11</option>
+                        <option>Grade 12</option>
+                        <option>1st Year</option>
+                        <option>2nd Year</option>
+                        <option>3rd Year</option>
+                        <option>4th Year</option>
+                    </select>
+                </div>
+            </div>
+            
+            <label>GWA</label>
+            <input type="number" step="0.01" name="gwa" value="{{ app.gwa }}" required>
+            
+            <label>Reason</label>
+            <textarea name="reason" rows="3" required>{{ app.reason }}</textarea>
+            
+            <label>Update Documents (Optional - leave empty to keep current)</label>
+            
+            <label>School ID</label>
+            <input type="file" name="school_id" accept="image/*">
+            <small>Current: {{ app.school_id }}</small>
+            
+            <label>ID Picture</label>
+            <input type="file" name="id_picture" accept="image/*">
+            <small>Current: {{ app.id_picture }}</small>
+            
+            <label>Birth Certificate</label>
+            <input type="file" name="birth_certificate" accept="image/*">
+            <small>Current: {{ app.birth_certificate }}</small>
+            
+            <label>Grades</label>
+            <input type="file" name="grades" accept="image/*">
+            <small>Current: {{ app.grades }}</small>
+            
+            <label>COR</label>
+            <input type="file" name="cor" accept="image/*">
+            <small>Current: {{ app.cor }}</small>
+            
+            <button type="submit" class="submit-btn">Update Application</button>
+        </form>
+    </div>
+</div>
+
+<script>
+function toggleSidebar() {
+    const sidebar = document.getElementById("sidebar");
+    sidebar.classList.toggle("hide");
+}
+</script>
+</body>
+</html>

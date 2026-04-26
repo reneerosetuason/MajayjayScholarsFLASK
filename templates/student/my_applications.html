@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Applications | Scholar App</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* Sidebar styles are in layout/sidebar.html */
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #f7fafc; font-family: 'Inter', sans-serif; min-height: 100vh; overflow-x: hidden; }
+        
+        /* Fixed Navbar - adjusted for 250px sidebar */
+        .navbar { 
+            position: fixed;
+            left: 250px;
+            top: 0;
+            right: 0;
+            background: white; 
+            padding: 20px 40px; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08); 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            z-index: 900;
+            transition: left 0.3s ease;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .sidebar.hide ~ .navbar {
+            left: 0;
+        }
+        
+        .navbar-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .toggle-btn {
+            background: rgba(102, 126, 234, 0.1);
+            border: none;
+            font-size: 24px;
+            color: #667eea;
+            cursor: pointer;
+            padding: 5px 10px;
+            border-radius: 8px;
+            transition: 0.3s;
+        }
+        
+        .toggle-btn:hover {
+            background: rgba(102, 126, 234, 0.2);
+            transform: translateY(-2px);
+        }
+        
+        .navbar h1 { color: #2d3748; font-size: 24px; font-weight: 600; }
+        .navbar a { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 8px 20px; border-radius: 8px; text-decoration: none; transition: 0.3s; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3); }
+        .navbar a:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4); }
+        
+        /* Container - adjusted for sidebar */
+        .container { 
+            margin-left: 250px;
+            margin-top: 100px;
+            max-width: 1400px;
+            margin-right: auto;
+            padding: 0 40px 40px;
+            transition: margin-left 0.3s ease;
+        }
+        
+        .sidebar.hide ~ .container {
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .header-card { background: white; padding: 32px; border-radius: 24px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); margin-bottom: 30px; border: 1px solid #e2e8f0; }
+        .header-card h2 { margin-bottom: 10px; font-weight: 700; letter-spacing: -0.025em; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .header-card p { color: #718096; }
+
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: white; padding: 24px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); text-align: center; transition: all 0.3s ease; border: 1px solid #e2e8f0; }
+        .stat-card:hover { transform: translateY(-5px); box-shadow: 0 8px 30px rgba(102, 126, 234, 0.15); border-color: #667eea; }
+        .stat-card .number { font-size: 36px; font-weight: 700; margin-bottom: 5px; }
+        .stat-card .label { color: #718096; font-size: 13px; font-weight: 500; }
+        .stat-card.total .number { color: #667eea; }
+        .stat-card.approved .number { color: #48bb78; }
+        .stat-card.pending .number { color: #ffa500; }
+        .stat-card.rejected .number { color: #f56565; }
+
+        .applications-grid { display: grid; gap: 25px; }
+        .application-card { background: white; padding: 32px; border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); border-left: 4px solid #e2e8f0; transition: all 0.3s ease; border: 1px solid #e2e8f0; }
+        .application-card:hover { transform: translateY(-5px); box-shadow: 0 8px 30px rgba(102, 126, 234, 0.15); border-color: #667eea; }
+        .application-card.approved { border-left-color: #48bb78; }
+        .application-card.pending { border-left-color: #ffa500; }
+        .application-card.rejected { border-left-color: #f56565; }
+
+        .card-header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 20px; flex-wrap: wrap; gap: 15px; }
+        .card-header h3 { color: #2d3748; font-size: 22px; font-weight: 600; }
+        .application-id { color: #888; font-size: 13px; }
+        .timeline-badge { display: inline-block; margin-top: 5px; color: #666; font-size: 13px; }
+
+        .badges { display: flex; gap: 8px; flex-wrap: wrap; }
+        .badge { padding: 6px 14px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+        .badge-approved { background: #d4edda; color: #155724; }
+        .badge-pending { background: #fff3cd; color: #856404; }
+        .badge-rejected { background: #f8d7da; color: #721c24; }
+        .badge-renewal { background: #d1ecf1; color: #0c5460; }
+        .badge-scholar { background: #e7d6f5; color: #6f42c1; }
+
+        .card-details { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
+        .detail-item strong { font-size: 12px; color: #666; margin-bottom: 5px; display: block; }
+
+        .documents-section { margin-top: 20px; }
+        .documents-section h4 { margin-bottom: 12px; color: #333; font-size: 16px; }
+        .document-links { display: flex; gap: 10px; flex-wrap: wrap; }
+        .doc-link { background: white; padding: 8px 16px; border-radius: 8px; text-decoration: none; border: 2px solid #e0e0e0; color: #7a5af5; font-weight: 500; transition: 0.3s; }
+        .doc-link:hover { background: #7a5af5; color: white; border-color: #7a5af5; }
+
+        .reason-section { background: #fffbf0; padding: 20px; border-radius: 10px; border-left: 4px solid #ffa500; margin-bottom: 20px; }
+        .reason-section strong { display: block; margin-bottom: 10px; color: #333; }
+        .reason-section p { color: #555; line-height: 1.6; }
+
+        .empty-state { background: white; padding: 80px 20px; border-radius: 24px; text-align: center; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); border: 1px solid #e2e8f0; }
+        .empty-state .icon { font-size: 80px; margin-bottom: 20px; }
+        .empty-state h3 { color: #2d3748; margin-bottom: 10px; font-size: 24px; font-weight: 700; }
+        .empty-state p { color: #718096; margin-bottom: 30px; }
+        .apply-btn { display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 14px 35px; border-radius: 12px; color: white; text-decoration: none; font-weight: 600; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3); }
+        .apply-btn:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4); }
+        
+        @media (max-width: 768px) {
+            .navbar { left: 0; padding: 15px 20px; }
+            .container { margin-left: 0; padding: 0 20px 40px; margin-top: 90px; }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- SIDEBAR -->
+    {% include 'layout/sidebar.html' %}
+
+    <!-- NAVBAR -->
+    <nav class="navbar">
+        <div class="navbar-left">
+            <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
+            <h1>📋 My Applications</h1>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="header-card">
+            <h2>Your Scholarship Applications</h2>
+            <p>Track the status of your scholarship applications and view complete details.</p>
+        </div>
+
+        {% if applications %}
+        
+        <!-- STAT CARDS - FIXED: Using lowercase status values -->
+        <div class="stats-grid">
+            <div class="stat-card total">
+                <div class="number">{{ applications|length }}</div>
+                <div class="label">Total Applications</div>
+            </div>
+            <div class="stat-card approved">
+                <div class="number">{{ applications|selectattr('status','equalto','approved')|list|length }}</div>
+                <div class="label">Approved</div>
+            </div>
+            <div class="stat-card pending">
+                <div class="number">{{ applications|selectattr('status','equalto','pending')|list|length }}</div>
+                <div class="label">Pending</div>
+            </div>
+            <div class="stat-card rejected">
+                <div class="number">{{ applications|selectattr('status','equalto','rejected')|list|length }}</div>
+                <div class="label">Rejected</div>
+            </div>
+        </div>
+
+        <div class="applications-grid">
+            {% for app in applications %}
+            <div class="application-card {{ app.status|lower }}">
+
+                <!-- HEADER -->
+                <div class="card-header">
+                    <div>
+                        <h3>{{ app.first_name }} {{ app.middle_name }} {{ app.last_name }}</h3>
+                        <p class="application-id">Application ID: #{{ app.application_id }}</p>
+                        <span class="timeline-badge">📅 Submitted: {{ app.submission_date.strftime('%B %d, %Y') }}</span>
+                    </div>
+
+                    <div class="badges">
+                        <!-- STATUS BADGE - FIXED: Using lowercase comparison -->
+                        {% if app.status == 'approved' %}
+                            <span class="badge badge-approved">✓ Approved</span>
+                        {% elif app.status == 'pending' %}
+                            <span class="badge badge-pending">⏳ Pending Review</span>
+                        {% elif app.status == 'rejected' %}
+                            <span class="badge badge-rejected">✗ Rejected</span>
+                        {% elif app.status == 'renewal' %}
+                            <span class="badge badge-renewal">🔄 Renewal</span>
+                        {% else %}
+                            <span class="badge badge-pending">{{ app.status }}</span>
+                        {% endif %}
+
+                        <!-- SCHOLARSHIP TYPE BADGE -->
+                        {% if app.scholarship_type %}
+                        <span class="badge badge-scholar">{{ app.scholarship_type|title }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- DETAILS -->
+                <div class="card-details">
+                    <div class="detail-item">
+                        <strong>Student ID</strong>
+                        <span>{{ app.student_id or 'N/A' }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <strong>Course</strong>
+                        <span>{{ app.course or 'N/A' }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <strong>Year Level</strong>
+                        <span>{{ app.year_level or 'N/A' }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <strong>GWA</strong>
+                        <span style="color:#7a5af5; font-weight:600;">{{ app.gwa or 'N/A' }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <strong>Address</strong>
+                        <span>{{ app.address or 'N/A' }}, {{ app.baranggay or '' }} {{ app.municipality or '' }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <strong>Contact</strong>
+                        <span>{{ app.contact_number or 'N/A' }}</span>
+                    </div>
+                </div>
+
+                <!-- REASON -->
+                {% if app.reason %}
+                <div class="reason-section">
+                    <strong>💭 Your Statement:</strong>
+                    <p>{{ app.reason }}</p>
+                </div>
+                {% endif %}
+
+                <!-- DOCUMENTS -->
+                <div class="documents-section">
+                    <h4>📎 Submitted Documents</h4>
+                    <div class="document-links">
+                        {% if app.school_id %}
+                        <a href="/static/uploads/{{ app.school_id }}" class="doc-link" target="_blank">🆔 School ID</a>
+                        {% endif %}
+                        {% if app.id_picture %}
+                        <a href="/static/uploads/{{ app.id_picture }}" class="doc-link" target="_blank">📷 ID Picture</a>
+                        {% endif %}
+                        {% if app.birth_certificate %}
+                        <a href="/static/uploads/{{ app.birth_certificate }}" class="doc-link" target="_blank">📋 Birth Certificate</a>
+                        {% endif %}
+                        {% if app.grades %}
+                        <a href="/static/uploads/{{ app.grades }}" class="doc-link" target="_blank">📊 Grades</a>
+                        {% endif %}
+                        {% if app.cor %}
+                        <a href="/static/uploads/{{ app.cor }}" class="doc-link" target="_blank">📄 COR</a>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- EDIT BUTTON (Only for pending applications) -->
+                {% if app.status|lower == 'pending' %}
+                <div style="margin-top: 20px; text-align: right;">
+                    <a href="/edit_application/{{ app.get('renewal_id', app.get('application_id')) }}?type={{ app.type }}" style="background: linear-gradient(135deg, #7a5af5, #6745d1); color: white; padding: 10px 25px; border-radius: 8px; text-decoration: none; font-weight: 600; display: inline-block; transition: 0.3s;">✏️ Edit Application</a>
+                </div>
+                {% endif %}
+
+            </div>
+            {% endfor %}
+        </div>
+
+        {% else %}
+        <div class="empty-state">
+            <div class="icon">📭</div>
+            <h3>No Applications Yet</h3>
+            <p>You haven't submitted any scholarship applications.</p>
+            <a href="/apply" class="apply-btn">Apply for Scholarship</a>
+        </div>
+        {% endif %}
+
+    </div>
+    
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById("sidebar");
+            sidebar.classList.toggle("hide");
+        }
+    </script>
+</body>
+</html>

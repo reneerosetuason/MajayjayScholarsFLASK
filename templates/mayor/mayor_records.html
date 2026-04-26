@@ -1,0 +1,1241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scholar Records | Mayor Panel</title>
+    <style>
+        /* Sidebar styles are in layout/sidebar.html */
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #f7fafc;
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
+        
+        /* Fixed Navbar - adjusted for 250px sidebar */
+        .navbar {
+            position: fixed;
+            left: 250px;
+            top: 0;
+            right: 0;
+            background: white;
+            padding: 20px 40px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 900;
+            transition: left 0.3s ease;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .sidebar.hide ~ .navbar {
+            left: 0;
+        }
+        
+        .navbar-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .toggle-btn {
+            background: rgba(102, 126, 234, 0.1);
+            border: none;
+            font-size: 24px;
+            color: #667eea;
+            cursor: pointer;
+            padding: 5px 10px;
+            border-radius: 8px;
+            transition: 0.3s;
+        }
+        
+        .toggle-btn:hover {
+            background: rgba(102, 126, 234, 0.2);
+            transform: translateY(-2px);
+        }
+        
+        .navbar h1 {
+            color: #2d3748; font-size: 24px; font-weight: 600;
+        }
+        .navbar a {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;
+            padding: 8px 20px; border-radius: 8px;
+            text-decoration: none; transition: 0.3s;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+        .navbar a:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4); }
+
+        /* Container - adjusted for sidebar */
+        .container {
+            margin-left: 250px;
+            margin-top: 100px;
+            max-width: calc(100% - 250px);
+            padding: 0 40px 40px;
+            transition: margin-left 0.3s ease;
+        }
+        
+        .sidebar.hide ~ .container {
+            margin-left: 0;
+            max-width: 100%;
+        }
+
+        .header-card {
+            background: white; padding: 32px; border-radius: 24px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08); margin-bottom: 30px;
+            border: 1px solid #e2e8f0;
+        }
+        .header-card h2 { font-weight: 700; letter-spacing: -0.025em; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 10px; }
+        .header-card p { color: #718096; }
+
+        /* Stats */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px; margin-bottom: 30px;
+        }
+        .stat-card {
+            background: white; padding: 24px; border-radius: 16px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s ease;
+        }
+        .stat-card:hover { transform: translateY(-5px); box-shadow: 0 8px 30px rgba(102, 126, 234, 0.15); border-color: #667eea; }
+        .stat-card .number {
+            font-size: 32px; font-weight: bold; margin-bottom: 5px;
+        }
+        .stat-card .label { color: #666; font-size: 13px; }
+        .stat-card.total .number { color: #667eea; }
+        .stat-card.approved .number { color: #48bb78; }
+        .stat-card.pending .number { color: #ffa500; }
+        .stat-card.rejected .number { color: #f56565; }
+
+        /* Filter Tabs */
+        .filter-tabs {
+            background: white; padding: 15px 30px;
+            border-radius: 16px;
+            display: flex; gap: 15px; flex-wrap: wrap;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            border: 1px solid #e2e8f0;
+        }
+        .filter-btn {
+            padding: 10px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            font-weight: 500;
+            color: #666;
+            transition: 0.3s;
+        }
+        .filter-btn:hover { border-color: #667eea; color: #667eea; }
+        .filter-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-color: transparent;
+        }
+
+        /* Search */
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .table-header h3 {
+            margin: 0;
+        }
+        .search-box input {
+            padding: 10px 18px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: 0.3s;
+            min-width: 300px;
+        }
+        .search-box input:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        /* Table */
+        .records-card {
+            background: white; padding: 32px;
+            border-radius: 24px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            overflow-x: auto;
+            border: 1px solid #e2e8f0;
+        }
+        .records-card h3 {
+            color: #2d3748;
+            font-size: 20px;
+            font-weight: 600;
+        }
+        table { width: 100%; border-collapse: collapse; min-width: 1000px; }
+        table thead { background: #f8f9fa; }
+        th {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            color: #444; text-align: left;
+            cursor: pointer;
+            user-select: none;
+            position: relative;
+            transition: 0.2s;
+        }
+        th:hover { background: #e9ecef; }
+        th.sortable::after {
+            content: ' ⇅';
+            color: #bbb;
+            font-size: 16px;
+            margin-left: 5px;
+        }
+        th.sort-asc::after {
+            content: ' ▲';
+            color: #667eea;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        th.sort-desc::after {
+            content: ' ▼';
+            color: #667eea;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            color: #444; text-align: left;
+        }
+        tbody tr:hover { background: #f8f9fa; }
+
+        /* Badges */
+        .badge {
+            padding: 6px 12px; border-radius: 12px;
+            font-size: 12px; font-weight: 600;
+        }
+        .badge-approved { background: #d4edda; color: #155724; }
+        .badge-pending { background: #fff3cd; color: #856404; }
+        .badge-rejected { background: #f8d7da; color: #721c24; }
+
+        /* Scholarship type */
+        .badge-new { background: #cfe2ff; color: #084298; }
+        .badge-renewal { background: #e7d6f5; color: #6f42c1; }
+
+        /* Buttons */
+        .btn-sm {
+            padding: 6px 12px; border-radius: 6px;
+            border: none; cursor: pointer;
+            font-size: 12px; font-weight: 600;
+            transition: 0.3s;
+        }
+        .btn-view { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .btn-view:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3); }
+
+        /* Modal */
+        .modal {
+            display: none; position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center; align-items: center;
+            z-index: 1100;
+        }
+        .modal.active { display: flex; }
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%; max-width: 600px;
+            max-height: 85vh; overflow-y: auto;
+        }
+        .modal-header { 
+            display: flex; 
+            justify-content: space-between; 
+            margin-bottom: 20px;
+            align-items: center;
+        }
+        .modal-header h3 {
+            color: #2d3748;
+            font-weight: 600;
+        }
+        .close-btn { 
+            font-size: 30px; 
+            cursor: pointer; 
+            border: none; 
+            background: none; 
+            color: #999;
+            line-height: 1;
+        }
+        .close-btn:hover {
+            color: #333;
+        }
+        .detail-row { margin-bottom: 15px; }
+        .detail-row strong { color: #333; margin-bottom: 5px; display: block; font-size: 13px; }
+        .detail-row p { color: #555; }
+        .detail-row a {
+            color: #667eea;
+            text-decoration: none;
+        }
+        .detail-row a:hover {
+            text-decoration: underline;
+        }
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+        }
+        .btn-approve {
+            flex: 1;
+            padding: 12px;
+            background: #48bb78;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .btn-approve:hover {
+            background: #38a169;
+        }
+        .btn-reject {
+            flex: 1;
+            padding: 12px;
+            background: #f56565;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .btn-reject:hover {
+            background: #e53e3e;
+        }
+        
+        /* Pagination */
+        .pagination {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+        }
+        .pagination-info {
+            color: #666;
+            font-size: 14px;
+        }
+        .pagination-controls {
+            display: flex;
+            gap: 8px;
+        }
+        .pagination-controls button {
+            padding: 8px 16px;
+            border: 1px solid #e2e8f0;
+            background: white;
+            color: #667eea;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        .pagination-controls button:hover:not(:disabled) {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: transparent;
+        }
+        .pagination-controls button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .pagination-controls button.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: transparent;
+        }
+        
+        @media (max-width: 768px) {
+            .navbar {
+                left: 0;
+                padding: 15px 20px;
+            }
+            .container {
+                margin-left: 0;
+                padding: 0 20px 40px;
+                margin-top: 90px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- SIDEBAR -->
+    {% include 'layout/sidebar.html' %}
+
+    <!-- NAVBAR -->
+    <nav class="navbar">
+        <div class="navbar-left">
+            <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
+            <h1>📁 Scholar Records</h1>
+        </div>
+    </nav>
+
+    <!-- MAIN CONTENT -->
+    <div class="container">
+
+        <!-- Header -->
+        <div class="header-card">
+            <h2>Complete Scholarship Records</h2>
+            <p>View and manage all scholarship applications</p>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-grid">
+            <div class="stat-card total"><div class="number">{{ (applications|length) + (renewals|length) }}</div><div class="label">Total</div></div>
+            <div class="stat-card approved"><div class="number">{{ applications|length }}</div><div class="label">Active Applications</div></div>
+            <div class="stat-card" style="border-color: #7c3aed;"><div class="number" style="color: #7c3aed;">{{ renewals|length }}</div><div class="label">Renewal Applications</div></div>
+            <div class="stat-card rejected"><div class="number">{{ archived_count|default(0) }}</div><div class="label">Archived Applications</div></div>
+        </div>
+
+        <!-- Archive Toggle -->
+        <div class="filter-tabs" style="margin-bottom: 15px;">
+            <a href="/mayor/records?archived=false&section=applications" class="filter-btn {% if not show_archived and section != 'renewals' %}active{% endif %}" style="text-decoration:none;">📋 Active Applications</a>
+            <a href="/mayor/records?section=renewals" class="filter-btn {% if section == 'renewals' %}active{% endif %}" style="text-decoration:none;">🔄 Renewal Applications</a>
+            <a href="/mayor/records?archived=true" class="filter-btn {% if show_archived %}active{% endif %}" style="text-decoration:none;">🗄️ Archived Applications</a>
+        </div>
+
+        <!-- Filters -->
+        {% if not show_archived %}
+        <div class="filter-tabs">
+            <button class="filter-btn active" onclick="filterRecords('all')">All</button>
+            <button class="filter-btn" onclick="filterRecords('approved')">Approved</button>
+            <button class="filter-btn" onclick="filterRecords('pending')">Pending</button>
+            <button class="filter-btn" onclick="filterRecords('rejected')">Rejected</button>
+        </div>
+        {% endif %}
+
+        <!-- APPLICATIONS TABLE -->
+        {% if section != 'renewals' %}
+        <div class="records-card">
+            {% if applications %}
+            <div class="table-header">
+                <h3>Application Records</h3>
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="🔍 Search by name, ID, course, status..." onkeyup="searchTable()">
+                </div>
+            </div>
+
+            <table id="recordsTable">
+                <thead>
+                    <tr>
+                        <th class="sortable" onclick="sortTable(0)">ID</th>
+                        <th class="sortable" onclick="sortTable(1)">First Name</th>
+                        <th class="sortable" onclick="sortTable(2)">Middle Name</th>
+                        <th class="sortable" onclick="sortTable(3)">Last Name</th>
+                        <th class="sortable" onclick="sortTable(4)">Student ID</th>
+                        <th class="sortable" onclick="sortTable(5)">Course</th>
+                        <th class="sortable" onclick="sortTable(6)">Year</th>
+                        <th class="sortable" onclick="sortTable(7)">GWA</th>
+                        <th class="sortable" onclick="sortTable(8)">Status</th>
+                        <th class="sortable" onclick="sortTable(9)">Date Applied</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for app in applications %}
+                    <tr 
+                        data-status="{{ app['status'] }}"
+                        data-type="{{ app['scholarship_type'] }}"
+                    >
+                        <td>#{{ app['application_id'] }}</td>
+                        <td>{{ app['first_name'] }}</td>
+                        <td>{{ app['middle_name'] or '-' }}</td>
+                        <td>{{ app['last_name'] }}</td>
+                        <td>{{ app['student_id'] }}</td>
+                        <td>{{ app['course'] }}</td>
+                        <td>{{ app['year_level'] }}</td>
+                        <td style="font-weight:600; color:#7a5af5;">{{ app['gwa'] }}</td>
+
+                        <td>
+                            <span class="badge badge-{{ app['status'] }}">
+                                {{ app['status']|capitalize }}
+                            </span>
+                        </td>
+
+                        <td>
+                            {% if app['submission_date'] %}
+                                {{ app['submission_date'].strftime('%B %d, %Y') }}
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </td>
+
+                        <td style="white-space: nowrap;">
+                            {% set date_str = app.submission_date.strftime('%B %d, %Y') if app.submission_date else 'N/A' %}
+                            <button class="btn-sm btn-view"
+                            onclick="viewDetails(
+                                '{{ app.application_id }}',
+                                '{{ app.first_name|e }}',
+                                '{{ app.middle_name|e }}',
+                                '{{ app.last_name|e }}',
+                                '{{ app.student_id|e }}',
+                                '{{ app.course|e }}',
+                                '{{ app.year_level|e }}',
+                                '{{ app.gwa }}',
+                                '{{ app.address|e }}',
+                                '{{ app.reason|e }}',
+                                '{{ app.scholarship_type }}',
+                                '{{ app.status }}',
+                                '{{ date_str }}',
+                                '{{ app.school_id_path }}',
+                                '{{ app.id_picture_path }}',
+                                '{{ app.birth_certificate_path }}',
+                                '{{ app.grades_path }}',
+                                '{{ app.cor_path }}'
+                            )"
+                        >View</button>
+                        
+                        {% if show_archived %}
+                        <form method="POST" action="{{ url_for('unarchive_application', application_id=app.application_id) }}" style="display:inline;" onsubmit="return confirm('Restore this application to active records?');">
+                            <button type="submit" class="btn-sm" style="background:#48bb78; color:white; margin-left:5px;">Unarchive</button>
+                        </form>
+                        {% else %}
+                        <form method="POST" action="{{ url_for('archive_application', application_id=app.application_id) }}" style="display:inline;" onsubmit="return confirm('Are you sure you want to archive this application?');">
+                            <button type="submit" class="btn-sm" style="background:#ff9800; color:white; margin-left:5px;">Archive</button>
+                        </form>
+                        {% endif %}
+                        </td>
+
+                    </tr>
+                    {% endfor %}
+                </tbody>
+
+            </table>
+
+            <div class="pagination">
+                <div class="pagination-info">
+                    Showing <span id="startEntry">1</span> to <span id="endEntry">10</span> of <span id="totalEntries">{{ applications|length }}</span> entries
+                </div>
+                <div class="pagination-controls">
+                    <button onclick="changePage('prev')" id="prevBtn">Previous</button>
+                    <div id="pageNumbers"></div>
+                    <button onclick="changePage('next')" id="nextBtn">Next</button>
+                </div>
+            </div>
+
+            {% else %}
+            {% if not (show_archived and renewals) %}
+            <p style="text-align:center; padding:40px; color:#777;">📭 No records found</p>
+            {% endif %}
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <!-- ARCHIVED RENEWALS IN ARCHIVED SECTION -->
+        {% if show_archived and renewals %}
+        <div class="records-card" style="margin-top:30px;">
+            <div class="table-header">
+                <h3>🗄️ Archived Renewals</h3>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>First Name</th>
+                        <th>Middle Name</th>
+                        <th>Last Name</th>
+                        <th>Student ID</th>
+                        <th>Course</th>
+                        <th>Year</th>
+                        <th>GWA</th>
+                        <th>Status</th>
+                        <th>Date Submitted</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for renewal in renewals %}
+                    <tr>
+                        <td>#{{ renewal.renewal_id }}</td>
+                        <td>{{ renewal.first_name }}</td>
+                        <td>{{ renewal.middle_name or '-' }}</td>
+                        <td>{{ renewal.last_name }}</td>
+                        <td>{{ renewal.student_id }}</td>
+                        <td>{{ renewal.course }}</td>
+                        <td>{{ renewal.year_level }}</td>
+                        <td style="font-weight:600; color:#7a5af5;">{{ renewal.gwa }}</td>
+                        <td>
+                            <span class="badge badge-{{ renewal.status|lower }}">
+                                {{ renewal.status|capitalize }}
+                            </span>
+                        </td>
+                        <td>{{ renewal.submission_date.strftime('%B %d, %Y') if renewal.submission_date else 'N/A' }}</td>
+                        <td style="white-space: nowrap;">
+                            {% set renewal_date = renewal.submission_date.strftime('%B %d, %Y') if renewal.submission_date else 'N/A' %}
+                            <button class="btn-sm btn-view" onclick="viewRenewalDetails(
+                                '{{ renewal.renewal_id }}',
+                                '{{ renewal.first_name|e }}',
+                                '{{ renewal.middle_name|e }}',
+                                '{{ renewal.last_name|e }}',
+                                '{{ renewal.student_id|e }}',
+                                '{{ renewal.course|e }}',
+                                '{{ renewal.year_level|e }}',
+                                '{{ renewal.gwa }}',
+                                '{{ renewal.address|e }}',
+                                '{{ renewal.reason|e }}',
+                                '{{ renewal.status }}',
+                                '{{ renewal_date }}',
+                                '{{ renewal.school_id_path }}',
+                                '{{ renewal.id_picture_path }}',
+                                '{{ renewal.birth_certificate_path }}',
+                                '{{ renewal.grades_path }}',
+                                '{{ renewal.cor_path }}'
+                            )">View</button>
+                            
+                            <form method="POST" action="{{ url_for('unarchive_renewal', renewal_id=renewal.renewal_id) }}" style="display:inline;" onsubmit="return confirm('Restore this renewal to active records?');">
+                                <button type="submit" class="btn-sm" style="background:#48bb78; color:white; margin-left:5px;">Unarchive</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <div class="pagination">
+                <div class="pagination-info">
+                    Showing <span id="startEntryArchived">1</span> to <span id="endEntryArchived">10</span> of <span id="totalEntriesArchived">{{ renewals|length }}</span> entries
+                </div>
+                <div class="pagination-controls">
+                    <button onclick="changePageArchived('prev')" id="prevBtnArchived">Previous</button>
+                    <div id="pageNumbersArchived"></div>
+                    <button onclick="changePageArchived('next')" id="nextBtnArchived">Next</button>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- RENEWAL APPLICATIONS SECTION -->
+        {% if section == 'renewals' %}
+        <div class="records-card">
+            <div class="table-header">
+                <h3>🔄 Renewal Applications</h3>
+                <div class="search-box">
+                    <input type="text" id="searchRenewals" placeholder="🔍 Search renewals..." onkeyup="searchRenewalsTable()">
+                </div>
+            </div>
+
+            {% if renewals %}
+            <table id="renewalsTable">
+                <thead>
+                    <tr>
+                        <th class="sortable" onclick="sortRenewalsTable(0)">ID</th>
+                        <th class="sortable" onclick="sortRenewalsTable(1)">First Name</th>
+                        <th class="sortable" onclick="sortRenewalsTable(2)">Middle Name</th>
+                        <th class="sortable" onclick="sortRenewalsTable(3)">Last Name</th>
+                        <th class="sortable" onclick="sortRenewalsTable(4)">Student ID</th>
+                        <th class="sortable" onclick="sortRenewalsTable(5)">Course</th>
+                        <th class="sortable" onclick="sortRenewalsTable(6)">Year</th>
+                        <th class="sortable" onclick="sortRenewalsTable(7)">GWA</th>
+                        <th class="sortable" onclick="sortRenewalsTable(8)">Status</th>
+                        <th class="sortable" onclick="sortRenewalsTable(9)">Date Submitted</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for renewal in renewals %}
+                    <tr data-status="{{ renewal.status|lower }}">
+                        <td>#{{ renewal.renewal_id }}</td>
+                        <td>{{ renewal.first_name }}</td>
+                        <td>{{ renewal.middle_name or '-' }}</td>
+                        <td>{{ renewal.last_name }}</td>
+                        <td>{{ renewal.student_id }}</td>
+                        <td>{{ renewal.course }}</td>
+                        <td>{{ renewal.year_level }}</td>
+                        <td style="font-weight:600; color:#7a5af5;">{{ renewal.gwa }}</td>
+                        <td>
+                            <span class="badge badge-{{ renewal.status|lower }}">
+                                {{ renewal.status|capitalize }}
+                            </span>
+                        </td>
+                        <td>{{ renewal.submission_date.strftime('%B %d, %Y') if renewal.submission_date else 'N/A' }}</td>
+                        <td style="white-space: nowrap;">
+                            {% set renewal_date2 = renewal.submission_date.strftime('%B %d, %Y') if renewal.submission_date else 'N/A' %}
+                            <button class="btn-sm btn-view" onclick="viewRenewalDetails(
+                                '{{ renewal.renewal_id }}',
+                                '{{ renewal.first_name|e }}',
+                                '{{ renewal.middle_name|e }}',
+                                '{{ renewal.last_name|e }}',
+                                '{{ renewal.student_id|e }}',
+                                '{{ renewal.course|e }}',
+                                '{{ renewal.year_level|e }}',
+                                '{{ renewal.gwa }}',
+                                '{{ renewal.address|e }}',
+                                '{{ renewal.reason|e }}',
+                                '{{ renewal.status }}',
+                                '{{ renewal_date2 }}',
+                                '{{ renewal.school_id_path }}',
+                                '{{ renewal.id_picture_path }}',
+                                '{{ renewal.birth_certificate_path }}',
+                                '{{ renewal.grades_path }}',
+                                '{{ renewal.cor_path }}'
+                            )">View</button>
+                            
+                            <form method="POST" action="{{ url_for('archive_renewal', renewal_id=renewal.renewal_id) }}" style="display:inline;" onsubmit="return confirm('Are you sure you want to archive this renewal?');">
+                                <button type="submit" class="btn-sm" style="background:#ff9800; color:white; margin-left:5px;">Archive</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <div class="pagination">
+                <div class="pagination-info">
+                    Showing <span id="startEntryRenewals">1</span> to <span id="endEntryRenewals">10</span> of <span id="totalEntriesRenewals">{{ renewals|length }}</span> entries
+                </div>
+                <div class="pagination-controls">
+                    <button onclick="changePageRenewals('prev')" id="prevBtnRenewals">Previous</button>
+                    <div id="pageNumbersRenewals"></div>
+                    <button onclick="changePageRenewals('next')" id="nextBtnRenewals">Next</button>
+                </div>
+            </div>
+
+            {% else %}
+            <p style="text-align:center; padding:40px; color:#777;">📭 No renewal applications found</p>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Modal -->
+    <div id="detailsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Application Details</h3>
+                <button class="close-btn" onclick="closeModal()">×</button>
+            </div>
+
+            <div id="modalBody"></div>
+        </div>
+    </div>
+
+<script>
+function toggleSidebar() {
+    const sidebar = document.getElementById("sidebar");
+    sidebar.classList.toggle("hide");
+}
+
+function searchTable() {
+    const input = document.getElementById("searchInput");
+    const filter = input.value.toLowerCase();
+    const table = document.getElementById("recordsTable");
+    const rows = table.getElementsByTagName("tr");
+
+    for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        const cells = row.getElementsByTagName("td");
+        let found = false;
+
+        for (let j = 0; j < cells.length - 1; j++) {
+            const cell = cells[j];
+            if (cell) {
+                const text = cell.textContent || cell.innerText;
+                if (text.toLowerCase().indexOf(filter) > -1) {
+                    found = true;
+                    break;
+                }
+            }
+        }
+        row.style.display = found ? "" : "none";
+    }
+}
+
+let sortDirection = {};
+
+function sortTable(columnIndex) {
+    const table = document.getElementById("recordsTable");
+    const tbody = table.getElementsByTagName("tbody")[0];
+    const rows = Array.from(tbody.getElementsByTagName("tr"));
+    const headers = table.getElementsByTagName("th");
+    
+    // Toggle sort direction
+    if (!sortDirection[columnIndex]) sortDirection[columnIndex] = 'asc';
+    else sortDirection[columnIndex] = sortDirection[columnIndex] === 'asc' ? 'desc' : 'asc';
+    
+    // Remove sort classes from all headers
+    for (let i = 0; i < headers.length; i++) {
+        headers[i].classList.remove('sort-asc', 'sort-desc');
+    }
+    
+    // Add sort class to current header
+    headers[columnIndex].classList.add(sortDirection[columnIndex] === 'asc' ? 'sort-asc' : 'sort-desc');
+    
+    // Sort rows
+    rows.sort((a, b) => {
+        let aValue = a.getElementsByTagName("td")[columnIndex].textContent.trim();
+        let bValue = b.getElementsByTagName("td")[columnIndex].textContent.trim();
+        
+        // Handle numeric values (ID, GWA)
+        if (columnIndex === 0 || columnIndex === 7) {
+            aValue = parseFloat(aValue.replace('#', '')) || 0;
+            bValue = parseFloat(bValue.replace('#', '')) || 0;
+        }
+        
+        if (aValue < bValue) return sortDirection[columnIndex] === 'asc' ? -1 : 1;
+        if (aValue > bValue) return sortDirection[columnIndex] === 'asc' ? 1 : -1;
+        return 0;
+    });
+    
+    // Reorder rows in DOM
+    rows.forEach(row => tbody.appendChild(row));
+}
+
+function filterRecords(filter) {
+    const section = "{{ section }}";
+    
+    if (section === 'renewals') {
+        // Filter renewals table
+        const rows = document.querySelectorAll("#renewalsTable tbody tr");
+        const buttons = document.querySelectorAll(".filter-btn");
+        buttons.forEach(b => b.classList.remove("active"));
+        event.target.classList.add("active");
+        
+        rows.forEach(row => {
+            let status = row.dataset.status;
+            if (filter === "all") row.style.display = "";
+            else row.style.display = (status === filter) ? "" : "none";
+        });
+    } else {
+        // Filter applications table
+        const rows = document.querySelectorAll("#recordsTable tbody tr");
+        const buttons = document.querySelectorAll(".filter-btn");
+        buttons.forEach(b => b.classList.remove("active"));
+        event.target.classList.add("active");
+
+        rows.forEach(row => {
+            let status = row.dataset.status;
+            let type = row.dataset.type;
+
+            if (filter === "all") row.style.display = "";
+            else if (filter === "new" || filter === "renewal")
+                row.style.display = (type === filter) ? "" : "none";
+            else
+                row.style.display = (status === filter) ? "" : "none";
+        });
+    }
+}
+
+function viewDetails(id, firstName, middleName, lastName, sid, course, year, gwa, address, reason, type, status, date, schoolId, idPic, birth, grades, cor) {
+    const modal = document.getElementById("detailsModal");
+    const body = document.getElementById("modalBody");
+    const fullName = `${firstName} ${middleName || ''} ${lastName}`.trim();
+
+    // Determine if buttons should be shown (only for pending applications)
+    const showActions = status.toLowerCase() === 'pending';
+    
+    body.innerHTML = `
+        <div class="detail-row"><strong>Application ID:</strong><p>#${id}</p></div>
+        <div class="detail-row"><strong>Name:</strong><p>${fullName}</p></div>
+        <div class="detail-row"><strong>Student ID:</strong><p>${sid}</p></div>
+        <div class="detail-row"><strong>Course:</strong><p>${course}</p></div>
+        <div class="detail-row"><strong>Year Level:</strong><p>${year}</p></div>
+        <div class="detail-row"><strong>GWA:</strong><p style="font-weight:600; color:#7a5af5;">${gwa}</p></div>
+        <div class="detail-row"><strong>Address:</strong><p>${address}</p></div>
+        <div class="detail-row"><strong>Status:</strong><p><span class="badge badge-${status.toLowerCase()}">${status.charAt(0).toUpperCase() + status.slice(1)}</span></p></div>
+        <div class="detail-row"><strong>Date Applied:</strong><p>${date}</p></div>
+
+        <div class="detail-row">
+            <strong>Reason:</strong>
+            <p style="background:#f7f7f7; padding:12px; border-radius:8px; margin-top:5px;">${reason}</p>
+        </div>
+
+        <div class="detail-row"><strong>📎 Documents:</strong></div>
+        <div class="detail-row" style="margin-left:15px;">
+            <p>🆔 <a href="/static/uploads/${schoolId}" target="_blank">School ID</a></p>
+        </div>
+        <div class="detail-row" style="margin-left:15px;">
+            <p>📷 <a href="/static/uploads/${idPic}" target="_blank">2x2 ID Picture</a></p>
+        </div>
+        <div class="detail-row" style="margin-left:15px;">
+            <p>📋 <a href="/static/uploads/${birth}" target="_blank">Birth Certificate</a></p>
+        </div>
+        <div class="detail-row" style="margin-left:15px;">
+            <p>📊 <a href="/static/uploads/${grades}" target="_blank">Copy of Grades</a></p>
+        </div>
+        <div class="detail-row" style="margin-left:15px;">
+            <p>📄 <a href="/static/uploads/${cor}" target="_blank">COR</a></p>
+        </div>
+
+        ${showActions ? `
+        <div class="modal-actions">
+            <form method="POST" action="/mayor/approve/${id}" style="flex:1;" onsubmit="return confirm('Are you sure you want to APPROVE this application?');">
+                <button type="submit" class="btn-approve">✓ Approve Application</button>
+            </form>
+            <form method="POST" action="/mayor/reject/${id}" style="flex:1;" onsubmit="return confirm('Are you sure you want to REJECT this application?');">
+                <button type="submit" class="btn-reject">✗ Reject Application</button>
+            </form>
+        </div>
+        ` : `
+        <div style="margin-top:20px; padding:15px; background:#f0f0f0; border-radius:8px; text-align:center; color:#666;">
+            <strong>Status: ${status.charAt(0).toUpperCase() + status.slice(1)}</strong><br>
+            <small>This application has already been ${status.toLowerCase()}.</small>
+        </div>
+        `}
+    `;
+
+    modal.classList.add("active");
+}
+
+function closeModal() {
+    document.getElementById("detailsModal").classList.remove("active");
+}
+
+document.getElementById("detailsModal").addEventListener("click", e => {
+    if (e.target === e.currentTarget) closeModal();
+});
+
+function searchRenewalsTable() {
+    const input = document.getElementById("searchRenewals");
+    const filter = input.value.toLowerCase();
+    const table = document.getElementById("renewalsTable");
+    const rows = table.getElementsByTagName("tr");
+
+    for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        const cells = row.getElementsByTagName("td");
+        let found = false;
+
+        for (let j = 0; j < cells.length - 1; j++) {
+            const cell = cells[j];
+            if (cell) {
+                const text = cell.textContent || cell.innerText;
+                if (text.toLowerCase().indexOf(filter) > -1) {
+                    found = true;
+                    break;
+                }
+            }
+        }
+        row.style.display = found ? "" : "none";
+    }
+}
+
+let sortRenewalsDirection = {};
+
+function sortRenewalsTable(columnIndex) {
+    const table = document.getElementById("renewalsTable");
+    const tbody = table.getElementsByTagName("tbody")[0];
+    const rows = Array.from(tbody.getElementsByTagName("tr"));
+    const headers = table.getElementsByTagName("th");
+    
+    // Toggle sort direction
+    if (!sortRenewalsDirection[columnIndex]) sortRenewalsDirection[columnIndex] = 'asc';
+    else sortRenewalsDirection[columnIndex] = sortRenewalsDirection[columnIndex] === 'asc' ? 'desc' : 'asc';
+    
+    // Remove sort classes from all headers
+    for (let i = 0; i < headers.length; i++) {
+        headers[i].classList.remove('sort-asc', 'sort-desc');
+    }
+    
+    // Add sort class to current header
+    headers[columnIndex].classList.add(sortRenewalsDirection[columnIndex] === 'asc' ? 'sort-asc' : 'sort-desc');
+    
+    // Sort rows
+    rows.sort((a, b) => {
+        let aValue = a.getElementsByTagName("td")[columnIndex].textContent.trim();
+        let bValue = b.getElementsByTagName("td")[columnIndex].textContent.trim();
+        
+        // Handle numeric values (ID, GWA)
+        if (columnIndex === 0 || columnIndex === 7) {
+            aValue = parseFloat(aValue.replace('#', '')) || 0;
+            bValue = parseFloat(bValue.replace('#', '')) || 0;
+        }
+        
+        if (aValue < bValue) return sortRenewalsDirection[columnIndex] === 'asc' ? -1 : 1;
+        if (aValue > bValue) return sortRenewalsDirection[columnIndex] === 'asc' ? 1 : -1;
+        return 0;
+    });
+    
+    // Reorder rows in DOM
+    rows.forEach(row => tbody.appendChild(row));
+}
+
+function filterRenewals(filter) {
+    const rows = document.querySelectorAll("#renewalsTable tbody tr");
+    
+    rows.forEach(row => {
+        let status = row.dataset.status;
+        
+        if (filter === "all") {
+            row.style.display = "";
+        } else {
+            row.style.display = (status === filter) ? "" : "none";
+        }
+    });
+}
+
+function viewRenewalDetails(id, firstName, middleName, lastName, sid, course, year, gwa, address, reason, status, date, schoolId, idPic, birth, grades, cor) {
+    const modal = document.getElementById("detailsModal");
+    const body = document.getElementById("modalBody");
+
+    const fullName = `${firstName} ${middleName || ''} ${lastName}`.trim();
+    const showActions = status.toLowerCase() === 'pending';
+    
+    body.innerHTML = `
+        <div class="detail-row"><strong>Renewal ID:</strong><p>#${id}</p></div>
+        <div class="detail-row"><strong>Name:</strong><p>${fullName}</p></div>
+        <div class="detail-row"><strong>Student ID:</strong><p>${sid}</p></div>
+        <div class="detail-row"><strong>Course:</strong><p>${course}</p></div>
+        <div class="detail-row"><strong>Year Level:</strong><p>${year}</p></div>
+        <div class="detail-row"><strong>GWA:</strong><p style="font-weight:600; color:#7a5af5;">${gwa}</p></div>
+        <div class="detail-row"><strong>Address:</strong><p>${address}</p></div>
+        <div class="detail-row"><strong>Type:</strong><p><span class="badge badge-renewal">Renewal</span></p></div>
+        <div class="detail-row"><strong>Status:</strong><p><span class="badge badge-${status.toLowerCase()}">${status.charAt(0).toUpperCase() + status.slice(1)}</span></p></div>
+        <div class="detail-row"><strong>Date Submitted:</strong><p>${date}</p></div>
+
+        <div class="detail-row">
+            <strong>Reason:</strong>
+            <p style="background:#f7f7f7; padding:12px; border-radius:8px; margin-top:5px;">${reason}</p>
+        </div>
+
+        <div class="detail-row"><strong>📎 Documents:</strong></div>
+        <div class="detail-row" style="margin-left:15px;">
+            <p>🆔 <a href="/static/uploads/${schoolId}" target="_blank">School ID</a></p>
+        </div>
+        <div class="detail-row" style="margin-left:15px;">
+            <p>📷 <a href="/static/uploads/${idPic}" target="_blank">2x2 ID Picture</a></p>
+        </div>
+        <div class="detail-row" style="margin-left:15px;">
+            <p>📋 <a href="/static/uploads/${birth}" target="_blank">Birth Certificate</a></p>
+        </div>
+        <div class="detail-row" style="margin-left:15px;">
+            <p>📊 <a href="/static/uploads/${grades}" target="_blank">Copy of Grades</a></p>
+        </div>
+        <div class="detail-row" style="margin-left:15px;">
+            <p>📄 <a href="/static/uploads/${cor}" target="_blank">COR</a></p>
+        </div>
+
+        ${showActions ? `
+        <div class="modal-actions">
+            <form method="POST" action="/mayor/approve_renewal/${id}" style="flex:1;" onsubmit="return confirm('Are you sure you want to APPROVE this renewal?');">
+                <button type="submit" class="btn-approve">✓ Approve Renewal</button>
+            </form>
+            <form method="POST" action="/mayor/reject_renewal/${id}" style="flex:1;" onsubmit="return confirm('Are you sure you want to REJECT this renewal?');">
+                <button type="submit" class="btn-reject">✗ Reject Renewal</button>
+            </form>
+        </div>
+        ` : `
+        <div style="margin-top:20px; padding:15px; background:#f0f0f0; border-radius:8px; text-align:center; color:#666;">
+            <strong>Status: ${status.charAt(0).toUpperCase() + status.slice(1)}</strong><br>
+            <small>This renewal has been ${status.toLowerCase()}.</small>
+        </div>
+        `}
+    `;
+
+    modal.classList.add("active");
+}
+
+// Pagination
+let currentPage = 1;
+const rowsPerPage = 10;
+const tableBody = document.querySelector('#recordsTable tbody');
+if (tableBody) {
+    let allRows = Array.from(tableBody.getElementsByTagName('tr'));
+    let totalPages = Math.ceil(allRows.length / rowsPerPage);
+
+    function displayPage(page) {
+        allRows = Array.from(tableBody.getElementsByTagName('tr')).filter(row => row.style.display !== 'none');
+        totalPages = Math.ceil(allRows.length / rowsPerPage);
+        
+        const start = (page - 1) * rowsPerPage;
+        const end = start + rowsPerPage;
+        
+        const allTableRows = Array.from(tableBody.getElementsByTagName('tr'));
+        allTableRows.forEach(row => {
+            if (row.style.display === 'none') return;
+            const index = allRows.indexOf(row);
+            row.style.display = (index >= start && index < end) ? '' : 'none';
+        });
+        
+        document.getElementById('startEntry').textContent = allRows.length > 0 ? start + 1 : 0;
+        document.getElementById('endEntry').textContent = Math.min(end, allRows.length);
+        document.getElementById('totalEntries').textContent = allRows.length;
+        
+        document.getElementById('prevBtn').disabled = page === 1;
+        document.getElementById('nextBtn').disabled = page === totalPages;
+        
+        renderPageNumbers();
+    }
+
+    function renderPageNumbers() {
+        const pageNumbersDiv = document.getElementById('pageNumbers');
+        pageNumbersDiv.innerHTML = '';
+        
+        for (let i = 1; i <= totalPages; i++) {
+            const btn = document.createElement('button');
+            btn.textContent = i;
+            btn.onclick = () => {
+                currentPage = i;
+                displayPage(currentPage);
+            };
+            if (i === currentPage) btn.classList.add('active');
+            pageNumbersDiv.appendChild(btn);
+        }
+    }
+
+    function changePage(direction) {
+        if (direction === 'prev' && currentPage > 1) {
+            currentPage--;
+        } else if (direction === 'next' && currentPage < totalPages) {
+            currentPage++;
+        }
+        displayPage(currentPage);
+    }
+
+    window.changePage = changePage;
+    displayPage(currentPage);
+}
+
+// Pagination for Renewals Table
+let currentPageRenewals = 1;
+const renewalsTableBody = document.querySelector('#renewalsTable tbody');
+if (renewalsTableBody) {
+    let allRenewalsRows = Array.from(renewalsTableBody.getElementsByTagName('tr'));
+    let totalPagesRenewals = Math.ceil(allRenewalsRows.length / rowsPerPage);
+
+    function displayPageRenewals(page) {
+        allRenewalsRows = Array.from(renewalsTableBody.getElementsByTagName('tr')).filter(row => row.style.display !== 'none');
+        totalPagesRenewals = Math.ceil(allRenewalsRows.length / rowsPerPage);
+        
+        const start = (page - 1) * rowsPerPage;
+        const end = start + rowsPerPage;
+        
+        const allTableRows = Array.from(renewalsTableBody.getElementsByTagName('tr'));
+        allTableRows.forEach(row => {
+            if (row.style.display === 'none') return;
+            const index = allRenewalsRows.indexOf(row);
+            row.style.display = (index >= start && index < end) ? '' : 'none';
+        });
+        
+        document.getElementById('startEntryRenewals').textContent = allRenewalsRows.length > 0 ? start + 1 : 0;
+        document.getElementById('endEntryRenewals').textContent = Math.min(end, allRenewalsRows.length);
+        document.getElementById('totalEntriesRenewals').textContent = allRenewalsRows.length;
+        
+        document.getElementById('prevBtnRenewals').disabled = page === 1;
+        document.getElementById('nextBtnRenewals').disabled = page === totalPagesRenewals;
+        
+        renderPageNumbersRenewals();
+    }
+
+    function renderPageNumbersRenewals() {
+        const pageNumbersDiv = document.getElementById('pageNumbersRenewals');
+        pageNumbersDiv.innerHTML = '';
+        
+        for (let i = 1; i <= totalPagesRenewals; i++) {
+            const btn = document.createElement('button');
+            btn.textContent = i;
+            btn.onclick = () => {
+                currentPageRenewals = i;
+                displayPageRenewals(currentPageRenewals);
+            };
+            if (i === currentPageRenewals) btn.classList.add('active');
+            pageNumbersDiv.appendChild(btn);
+        }
+    }
+
+    function changePageRenewals(direction) {
+        if (direction === 'prev' && currentPageRenewals > 1) {
+            currentPageRenewals--;
+        } else if (direction === 'next' && currentPageRenewals < totalPagesRenewals) {
+            currentPageRenewals++;
+        }
+        displayPageRenewals(currentPageRenewals);
+    }
+
+    window.changePageRenewals = changePageRenewals;
+    displayPageRenewals(currentPageRenewals);
+}
+
+// Pagination for Archived Renewals Table
+let currentPageArchived = 1;
+setTimeout(() => {
+    const tables = document.querySelectorAll('.records-card table');
+    let archivedTable = null;
+    
+    tables.forEach(table => {
+        const header = table.closest('.records-card').querySelector('h3');
+        if (header && header.textContent.includes('Archived Renewals')) {
+            archivedTable = table;
+        }
+    });
+    
+    if (archivedTable) {
+        const archivedTableBody = archivedTable.getElementsByTagName('tbody')[0];
+        let allArchivedRows = Array.from(archivedTableBody.getElementsByTagName('tr'));
+        let totalPagesArchived = Math.ceil(allArchivedRows.length / rowsPerPage);
+
+        function displayPageArchived(page) {
+            allArchivedRows = Array.from(archivedTableBody.getElementsByTagName('tr')).filter(row => row.style.display !== 'none');
+            totalPagesArchived = Math.ceil(allArchivedRows.length / rowsPerPage);
+            
+            const start = (page - 1) * rowsPerPage;
+            const end = start + rowsPerPage;
+            
+            const allTableRows = Array.from(archivedTableBody.getElementsByTagName('tr'));
+            allTableRows.forEach(row => {
+                if (row.style.display === 'none') return;
+                const index = allArchivedRows.indexOf(row);
+                row.style.display = (index >= start && index < end) ? '' : 'none';
+            });
+            
+            document.getElementById('startEntryArchived').textContent = allArchivedRows.length > 0 ? start + 1 : 0;
+            document.getElementById('endEntryArchived').textContent = Math.min(end, allArchivedRows.length);
+            document.getElementById('totalEntriesArchived').textContent = allArchivedRows.length;
+            
+            document.getElementById('prevBtnArchived').disabled = page === 1;
+            document.getElementById('nextBtnArchived').disabled = page === totalPagesArchived;
+            
+            renderPageNumbersArchived();
+        }
+
+        function renderPageNumbersArchived() {
+            const pageNumbersDiv = document.getElementById('pageNumbersArchived');
+            pageNumbersDiv.innerHTML = '';
+            
+            for (let i = 1; i <= totalPagesArchived; i++) {
+                const btn = document.createElement('button');
+                btn.textContent = i;
+                btn.onclick = () => {
+                    currentPageArchived = i;
+                    displayPageArchived(currentPageArchived);
+                };
+                if (i === currentPageArchived) btn.classList.add('active');
+                pageNumbersDiv.appendChild(btn);
+            }
+        }
+
+        function changePageArchived(direction) {
+            if (direction === 'prev' && currentPageArchived > 1) {
+                currentPageArchived--;
+            } else if (direction === 'next' && currentPageArchived < totalPagesArchived) {
+                currentPageArchived++;
+            }
+            displayPageArchived(currentPageArchived);
+        }
+
+        window.changePageArchived = changePageArchived;
+        displayPageArchived(currentPageArchived);
+    }
+}, 100);
+</script>
+
+</body>
+</html>

@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scholar App Sidebar</title>
+    <style>
+        .sidebar {
+            width: 250px;
+            background: white;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            position: fixed;
+            height: 100vh;
+            left: 0;
+            top: 0;
+            transition: all 0.3s ease;
+            z-index: 1100;
+            border-right: 1px solid #e2e8f0;
+        }
+        .sidebar.hide {
+            left: -260px;
+        }
+        .sidebar-logo {
+            width: 80px;
+            height: 80px;
+            object-fit: contain;
+            margin: 0 auto 15px auto;
+            display: block;
+        }
+        .sidebar h2 {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 22px;
+            margin-bottom: 30px;
+            text-align: center;
+            font-weight: 600;
+        }
+        .sidebar a {
+            display: block;
+            padding: 12px 15px;
+            color: #2d3748;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            margin-bottom: 8px;
+        }
+        .sidebar a:hover {
+            background: rgba(102, 126, 234, 0.1);
+            color: #667eea;
+            transform: translateX(5px);
+        }
+        .sidebar a.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+        .logout-btn {
+            margin-top: auto;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white !important;
+            text-align: center;
+            padding: 12px;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+        .logout-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+        @media (max-width: 768px) {
+            .sidebar {
+                left: -260px;
+            }
+            .sidebar.active {
+                left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar" id="sidebar">
+    <img src="/static/assets/majayjay_logo.jpg" alt="Majayjay Logo" class="sidebar-logo">
+    <h2>MajayjayScholars</h2>
+
+    {% if session.get('user_type') == 'student' %}
+        <a href="/student" class="{{ 'active' if request.path == '/student' else '' }}">🏠 Dashboard</a>
+
+        <a href="/my_applications" class="{{ 'active' if request.path == '/my_applications' else '' }}">
+            📄 My Applications
+        </a>
+
+        <a href="/renew" class="{{ 'active' if request.path == '/renew' else '' }}">
+            🔄 Renew Scholarship
+        </a>
+
+        <a href="/apply" class="{{ 'active' if request.path == '/apply' else '' }}">
+            📝 Apply Scholarship
+        </a>
+
+    {% elif session.get('user_type') == 'mayor' %}
+        <a href="/mayor" class="{{ 'active' if request.path == '/mayor' else '' }}">🏛 Mayor Dashboard</a>
+
+        <a href="/mayor/records" class="{{ 'active' if request.path == '/mayor/records' else '' }}">
+            📁 Scholar Records
+        </a>
+
+    {% elif session.get('user_type') == 'admin' %}
+        <a href="/admin" class="{{ 'active' if request.path == '/admin' else '' }}">🏛 Admin Dashboard</a>
+
+        <a href="/admin/add_admin" class="{{ 'active' if request.path == '/admin/add_admin' else '' }}">
+            👥 Add Admin Account
+        <!-- </a> -->
+
+        <!-- <a href="/admin/add_mayor" class="{{ 'active' if request.path == '/admin/add_mayor' else '' }}">
+            📁 Add Mayor Account -->
+        <!-- </a> -->
+    {% endif %}
+
+    <a href="/logout" class="logout-btn">Logout</a>
+</div>
+
+</body>
+</html>
