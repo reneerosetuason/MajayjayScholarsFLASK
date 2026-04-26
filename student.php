@@ -1,0 +1,133 @@
+<?php
+require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/includes/functions.php';
+require_role('student');
+
+$userId = $_SESSION['user_id'];
+
+$stmt = $db->prepare('SELECT first_name FROM users WHERE user_id = ? LIMIT 1');
+$stmt->bind_param('i', $userId);
+$stmt->execute();
+$result = $stmt->get_result();
+$currentStudent = $result->fetch_assoc();
+$stmt->close();
+
+$stmt = $db->prepare('SELECT is_open FROM renewal_settings WHERE id = 1 LIMIT 1');
+$stmt->execute();
+$result = $stmt->get_result();
+$setting = $result->fetch_assoc();
+$stmt->close();
+
+$renewal_open = $setting['is_open'] ?? false;
+
+$stmt = $db->prepare('SELECT status FROM application WHERE user_id = ? ORDER BY submission_date DESC LIMIT 1');
+$stmt->bind_param('i', $userId);
+$stmt->execute();
+$result = $stmt->get_result();
+$appStatus = $result->fetch_assoc();
+$stmt->close();
+
+$has_approved_application = $appStatus && $appStatus['status'] === 'approved';
+$first_name = $currentStudent['first_name'] ?? $_SESSION['email'];
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #f7fafc; font-family: 'Inter', sans-serif; color: #2d3748; min-height: 100vh; display: flex; overflow-x: hidden; }
+        .main-content { margin-left: 250px; flex: 1; padding: 40px 20px; transition: margin-left 0.3s ease; }
+        .main-content.expanded { margin-left: 0; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .menu-btn { font-size: 26px; cursor: pointer; color: #667eea; margin-right: 15px; background: rgba(102, 126, 234, 0.1); width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 12px; transition: all 0.3s ease; }
+        .menu-btn:hover { background: rgba(102, 126, 234, 0.2); transform: translateY(-2px); }
+        .topbar-left { display: flex; align-items: center; }
+        .topbar-left h2 { color: #2d3748; font-size: 1.5rem; font-weight: 600; }
+        .header { background: white; color: #2d3748; padding: 40px; border-radius: 24px; margin-bottom: 30px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); border: 1px solid #e2e8f0; }
+        .header h2 { font-size: 2rem; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.025em; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .info-text { text-align: center; font-size: 1rem; color: #718096; margin-bottom: 40px; background: white; padding: 20px; border-radius: 16px; font-weight: 500; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05); border: 1px solid #e2e8f0; }
+        .scholarship-section { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; margin-top: 30px; }
+        .scholarship-card { background: white; padding: 40px; border-radius: 24px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); transition: all 0.3s ease; text-align: center; position: relative; overflow: hidden; border: 1px solid #e2e8f0; }
+        .scholarship-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: linear-gradient(90deg, #667eea 0%, #764ba2 100%); }
+        .scholarship-card:hover { transform: translateY(-8px); box-shadow: 0 8px 30px rgba(102, 126, 234, 0.15); border-color: #667eea; }
+        .scholarship-card .icon { font-size: 64px; margin-bottom: 24px; filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1)); }
+        .scholarship-card h3 { color: #2d3748; font-size: 1.5rem; font-weight: 700; margin-bottom: 12px; letter-spacing: -0.025em; }
+        .scholarship-card p { color: #718096; font-size: 0.95rem; line-height: 1.6; margin-bottom: 28px; }
+        .action-btn { display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 12px; font-weight: 600; transition: all 0.3s ease; border: none; cursor: pointer; font-size: 1rem; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3); }
+        .action-btn:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4); }
+        .action-btn:active { transform: translateY(-1px); }
+        .alert { padding: 20px 25px; margin-bottom: 25px; border-radius: 16px; font-size: 0.95rem; font-weight: 500; box-shadow: 0 4px 15px rgba(0,0,0,0.1); animation: slideDown 0.3s ease; border: 1px solid; }
+        .alert-success { background: #d4edda; color: #155724; border-color: #48bb78; }
+        .alert-error { background: #fee; color: #c62828; border-color: #f56565; }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+        @media (max-width: 768px) { .main-content { margin-left: 0; padding: 20px; } }
+    </style>
+</head>
+<body>
+    <?php include __DIR__ . '/includes/sidebar.php'; ?>
+    <div class="main-content" id="main-content">
+        <div class="topbar">
+            <div class="topbar-left">
+                <div class="menu-btn" onclick="toggleSidebar()">☰</div>
+                <h2>Student Dashboard</h2>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="header">
+                <h2>Welcome, <?= h($first_name) ?> 🎓</h2>
+            </div>
+
+            <?php render_flash(); ?>
+
+            <p class="info-text">You can view scholarship requirements, apply, or check your application status here.</p>
+
+            <div class="scholarship-section">
+                <div class="scholarship-card">
+                    <div class="icon">📝</div>
+                    <h3>Apply Now</h3>
+                    <p>Gusto mo ba maging scholar ni mayor? Apply Now!</p>
+                    <a href="apply.php" class="action-btn">Apply for Scholarship</a>
+                </div>
+
+                <div class="scholarship-card">
+                    <div class="icon">🔄</div>
+                    <h3>Renew</h3>
+                    <?php if (!$has_approved_application): ?>
+                        <p style="color: #f56565; font-weight: 600;">⚠️ You must have an approved application first</p>
+                        <button class="action-btn" style="background: #cbd5e0; cursor: not-allowed; box-shadow: none;" disabled>Not Eligible</button>
+                    <?php elseif (!$renewal_open): ?>
+                        <p style="color: #f56565; font-weight: 600;">⚠️ Renewals are currently closed</p>
+                        <button class="action-btn" style="background: #cbd5e0; cursor: not-allowed; box-shadow: none;" disabled>Closed</button>
+                    <?php else: ?>
+                        <p>Renew your scholarship application</p>
+                        <a href="renew.php" class="action-btn">Renew Now</a>
+                    <?php endif; ?>
+                </div>
+
+                <!-- My Applications Card -->
+                <div class="scholarship-card">
+                    <div class="icon">📋</div>
+                    <h3>My Applications</h3>
+                    <p>View your application status and history</p>
+                    <a href="my_applications.php" class="action-btn">View Applications</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const main = document.getElementById('main-content');
+            sidebar.classList.toggle('hide');
+            main.classList.toggle('expanded');
+        }
+    </script>
+</body>
+</html>
